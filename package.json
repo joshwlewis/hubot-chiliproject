@@ -1,13 +1,13 @@
 {
-  "name":        "redminejs",
+  "name":        "hubot-chiliproject.js",
   "version":     "0.1",
   "author":      "rob hurring",
-  "keywords":    "hubot plugin scripts campfire bot robot redmine",
-  "description": "Basic redmine API for hubot or whatever",
+  "keywords":    "hubot plugin scripts campfire bot robot chiliproject",
+  "description": "Basic ChiliProject functionality for hubot",
 
   "repository" : {
     "type" : "git",
-    "url" : "https://github.com/robhurring/hubot-redmine.git"
+    "url" : "https://github.com/joshwlewis/hubot-chiliproject.git"
   },
 
   "dependencies": {

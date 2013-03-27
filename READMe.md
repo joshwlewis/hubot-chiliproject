@@ -1,27 +1,25 @@
-# Hubot Redmine
+# Hubot Chiliproject
 
-Light mapping of the Redmine REST API that allows hubot access to some basic redmine tasks. Once you have a redmine
+Light mapping of the ChilProject REST API that allows hubot access to some basic ChiliProject tasks. Once you have a ChiliProject
 user (preferably one with enough access to modify tickets), add the following to your heroku/etc. config:
 
-    heroku config:add HUBOT_REDMINE_BASE_URL="http://redmine.your-server.com"
-    heroku config:add HUBOT_REDMINE_TOKEN="your api token here"
+    heroku config:add HUBOT_CHILIPROJECT_BASE_URL="http://chiliproject.your-server.com"
+    heroku config:add HUBOT_CHILIPROJECT_TOKEN="your api token here"
 
 If using over SSL, add the following to your heroku config:
 
-    heroku config:add HUBOT_REDMINE_SSL=1
-
-![screenshot](https://github.com/robhurring/hubot-redmine/blob/master/ss.png?raw=true)
+    heroku config:add HUBOT_CHILIPROJECT_SSL=1
 
 ## Showing issue details
 
 * Hubot show me [issue id]
-* Hubot redmine me [issue id]
+* Hubot chili me [issue id]
 
 ## Showing my issue (or another user's)
 
 * Hubot show my issues
 * Hubot show [user]'s issues
-** [user] will attempt to match on redmine firstname or login
+** [user] will attempt to match on ChiliProject firstname or login
 
 ## Re-Assigning tickets
 
