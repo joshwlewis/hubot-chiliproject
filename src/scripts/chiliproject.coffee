@@ -1,10 +1,10 @@
-# (redmine|show) me <issue-id>     - Show the issue status
+# (chili|show) me <issue-id>     - Show the issue status
 # show (my|user's) issues          - Show your issues or another user's issues
 # assign <issue-id> to <user-first-name> ["notes"]  - Assign the issue to the user (searches login or firstname)
 #                                                     *With optional notes
 # update <issue-id> with "<note>"  - Adds a note to the issue
 # add <hours> hours to <issue-id> ["comments"]  - Adds hours to the issue with the optional comments
-# link me <issue-id> - Returns a link to the redmine issue
+# link me <issue-id> - Returns a link to the ChiliProject issue
 # set <issue-id> to <int>% ["comments"] - Updates an issue and sets the percent done
 #
 #
@@ -13,22 +13,20 @@
 #
 #---
 #
-# Showing of redmine issuess via the REST API.
+# Showing of ChiliProject issuess via the REST API.
 #
-# To get set up refer to the guide http://www.redmine.org/projects/redmine/wiki/Rest_api#Authentication
-# After that, heroku needs the following config
 #
-#   heroku config:add HUBOT_REDMINE_BASE_URL="http://redmine.your-server.com"
-#   heroku config:add HUBOT_REDMINE_TOKEN="your api token here"
+#   heroku config:add HUBOT_CHILIPROJECT_BASE_URL="http://chili.your-server.com"
+#   heroku config:add HUBOT_CHILIPROJECT_TOKEN="your api token here"
 #
-# If you are using redmine over HTTPS, add the following config option
+# If you are using ChiliProject over HTTPS, add the following config option
 #
-#   heroku config:add HUBOT_REDMINE_SSL=1
+#   heroku config:add HUBOT_CHILIPROJECT_SSL=1
 #
-# There may be issues if you have a lot of redmine users sharing a first name, but this can be avoided
-# by using redmine logins rather than firstnames
+# There may be issues if you have a lot of ChiliProject users sharing a first name, but this can be avoided
+# by using ChiliProject logins rather than firstnames
 #
-if process.env.HUBOT_REDMINE_SSL?
+if process.env.HUBOT_CHILIPROJECT_SSL?
   HTTP = require('https')
 else
   HTTP = require('http')
@@ -37,12 +35,12 @@ URL = require('url')
 QUERY = require('querystring')
 
 module.exports = (robot) ->
-  redmine = new Redmine process.env.HUBOT_REDMINE_BASE_URL, process.env.HUBOT_REDMINE_TOKEN
+  chili = new Chili process.env.HUBOT_CHILIPROJECT_BASE_URL, process.env.HUBOT_CHILIPROJECT_TOKEN
 
   # Robot link me <issue>
   robot.respond /link me (?:issue )?(?:#)?(\d+)/i, (msg) ->
     id = msg.match[1]
-    msg.reply "#{redmine.url}/issues/#{id}"
+    msg.reply "#{chili.url}/issues/#{id}"
 
   # Robot set <issue> to <percent>% ["comments"]
   robot.respond /set (?:issue )?(?:#)?(\d+) to (\d{1,3})%?(?: "?([^"]+)"?)?/i, (msg) ->
@@ -58,7 +56,7 @@ module.exports = (robot) ->
       "notes": notes
       "done_ratio": percent
 
-    redmine.Issue(id).update attributes, (err, data, status) ->
+    chili.Issue(id).update attributes, (err, data, status) ->
       if status == 200
         msg.reply "Set ##{id} to #{percent}%"
       else
@@ -79,14 +77,14 @@ module.exports = (robot) ->
       "hours": hours
       "comments": comments
 
-    redmine.TimeEntry(null).create attributes, (error, data, status) ->
+    chili.TimeEntry(null).create attributes, (error, data, status) ->
       if status == 201
         msg.reply "Your time was logged"
       else
-        msg.reply "Nothing could be logged. Make sure RedMine has a default activity set for time tracking. (Settings -> Enumerations -> Activities)"
+        msg.reply "Nothing could be logged. Make sure ChiliProject has a default activity set for time tracking. (Settings -> Enumerations -> Activities)"
 
-  # Robot show <my|user's> [redmine] issues
-  robot.respond /show (?:my|(\w+\'s)) (?:redmine )?issues/i, (msg) ->
+  # Robot show <my|user's> [chili] issues
+  robot.respond /show (?:my|(\w+\'s)) (?:chili )?issues/i, (msg) ->
     userMode = true
     firstName =
       if msg.match[1]?
@@ -95,7 +93,7 @@ module.exports = (robot) ->
       else
         msg.message.user.name.split(/\s/)[0]
 
-    redmine.Users name:firstName, (err,data) ->
+    chili.Users name:firstName, (err,data) ->
       unless data.total_count > 0
         msg.reply "Couldn't find any users with the name \"#{firstName}\""
         return false
@@ -108,7 +106,7 @@ module.exports = (robot) ->
         "status_id": "open"
         "sort": "priority:desc",
 
-      redmine.Issues params, (err, data) ->
+      chili.Issues params, (err, data) ->
         if err?
           msg.reply "Couldn't get a list of issues for you!"
         else
@@ -132,7 +130,7 @@ module.exports = (robot) ->
     attributes =
       "notes": "#{msg.message.user.name}: #{note}"
 
-    redmine.Issue(id).update attributes, (err, data, status) ->
+    chili.Issue(id).update attributes, (err, data, status) ->
       unless data?
         if status == 404
           msg.reply "Issue ##{id} doesn't exist."
@@ -155,7 +153,7 @@ module.exports = (robot) ->
         "subject": "#{subject}"
         "tracker_id": "#{tracker_id}"
 
-    redmine.Issue().add attributes, (err, data, status) ->
+    chili.Issue().add attributes, (err, data, status) ->
       unless data?
         if status == 404
           msg.reply "Couldn't update this issue, #{status} :("
@@ -166,7 +164,7 @@ module.exports = (robot) ->
   robot.respond /assign (?:issue )?(?:#)?(\d+) to (\w+)(?: "?([^"]+)"?)?/i, (msg) ->
     [id, userName, note] = msg.match[1..3]
 
-    redmine.Users name:userName, (err, data) ->
+    chili.Users name:userName, (err, data) ->
       unless data.total_count > 0
         msg.reply "Couldn't find any users with the name \"#{userName}\""
         return false
@@ -181,7 +179,7 @@ module.exports = (robot) ->
       attributes["notes"] = "#{msg.message.user.name}: #{note}" if note?
 
       # get our issue
-      redmine.Issue(id).update attributes, (err, data, status) ->
+      chili.Issue(id).update attributes, (err, data, status) ->
         unless data?
           if status == 404
             msg.reply "Issue ##{id} doesn't exist."
@@ -191,14 +189,14 @@ module.exports = (robot) ->
           msg.reply "Assigned ##{id} to #{user.firstname}."
           msg.send '/play trombone' if parseInt(id) == 3631
 
-  # Robot redmine me <issue>
-  robot.respond /(?:redmine|show)(?: me)? (?:issue )?(?:#)?(\d+)/i, (msg) ->
+  # Robot chili me <issue>
+  robot.respond /(?:chili|show)(?: me)? (?:issue )?(?:#)?(\d+)/i, (msg) ->
     id = msg.match[1]
 
     params =
       "include": "journals"
 
-    redmine.Issue(id).show params, (err, data, status) ->
+    chili.Issue(id).show params, (err, data, status) ->
       unless status == 200
         msg.reply "Issue ##{id} doesn't exist."
         return false
@@ -265,11 +263,11 @@ formatDate = (dateStamp, fmt = 'mm/dd/yyyy at hh:ii ap') ->
     .replace(/ap/, ap)
 
 # tries to resolve ambiguous users by matching login or firstname
-# redmine's user search is pretty broad (using login/name/email/etc.) so
+# ChiliProject's user search is pretty broad (using login/name/email/etc.) so
 # we're trying to just pull it in a bit and get a single user
 #
 # name - this should be the name you're trying to match
-# data - this is the array of users from redmine
+# data - this is the array of users from ChiliProject
 #
 # returns an array with a single user, or the original array if nothing matched
 resolveUsers = (name, data) ->
@@ -286,9 +284,9 @@ resolveUsers = (name, data) ->
     # give up
     data
 
-# Redmine API Mapping
+# ChiliProject API Mapping
 # This isn't 100% complete, but its the basics for what we would need in campfire
-class Redmine
+class Chili
   constructor: (url, token) ->
     @url = url
     @token = token
@@ -336,12 +334,12 @@ class Redmine
   put: (path, body, callback) ->
     @request "PUT", path, body, callback
 
-  # Private: Perform a request against the redmine REST API
+  # Private: Perform a request against the ChiliProject REST API
   # from the campfire adapter :)
   request: (method, path, body, callback) ->
     headers =
       "Content-Type": "application/json"
-      "X-Redmine-API-Key": @token
+      "X-ChiliProject-API-Key": @token
 
     endpoint = URL.parse(@url)
     pathname = endpoint.pathname.replace /^\/$/, ''
@@ -379,7 +377,7 @@ class Redmine
             callback null, null, response.statusCode
 
       response.on "error", (err) ->
-        console.error "Redmine response error: #{err}"
+        console.error "ChiliProject response error: #{err}"
         callback err, null, response.statusCode
 
     if method in ["POST", "PUT"]
@@ -388,5 +386,5 @@ class Redmine
       request.end()
 
     request.on "error", (err) ->
-      console.error "Redmine request error: #{err}"
+      console.error "ChiliProject request error: #{err}"
       callback err, null, 0
