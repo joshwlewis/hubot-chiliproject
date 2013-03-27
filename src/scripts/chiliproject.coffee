@@ -1,3 +1,4 @@
+# #<issue-id> - One line issue preview.
 # (chili|show) me <issue-id>     - Show the issue status
 # show (my|user's) issues          - Show your issues or another user's issues
 # assign <issue-id> to <user-first-name> ["notes"]  - Assign the issue to the user (searches login or firstname)
@@ -221,6 +222,32 @@ module.exports = (robot) ->
             _.push "    #{journal.notes}\n"
 
       msg.reply _.join "\n"
+
+  # Listens to #NNNN and gives ticket info
+  robot.hear /.*(#(\d+)).*/, (msg) ->
+    id = msg.match[1].replace /#/, ""
+
+    ignoredUsers = process.env.HUBOT_CHILIPROJECT_IGNORED_USERS or ""
+
+    #Ignore cetain users, like ChiliProject plugins
+    if msg.message.user.name in ignoredUsers.split(',')
+      return
+
+    if isNaN(id)
+      return
+
+    params = []
+
+    chili.Issue(id).show params, (err, data, status) ->
+      unless status == 200
+        # Issue not found, don't say anything
+        return false
+
+      issue = data.issue
+
+      url = "#{chili.url}/issues/#{id}"
+      msg.send "#{issue.tracker.name} ##{issue.id} -- #{issue.project.name}::#{issue.subject} -- #{issue.status.name}::#{issue.priority.name} #{url}"
+
 
 # simple ghetto fab date formatter this should definitely be replaced, but didn't want to
 # introduce dependencies this early
